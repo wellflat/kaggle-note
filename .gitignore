@@ -1,3 +1,7 @@
 .venv/
+__pycache__/
+data/
+runs/
+*.pth
 kaggle.json
 Pipfile.lock
