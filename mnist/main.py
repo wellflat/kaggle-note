@@ -5,7 +5,7 @@ import argparse
 from loader import create_loaders
 from classifier import Classifier
 from torchsummary import summary
-from PIL import Image
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Classifier Training')
@@ -16,10 +16,6 @@ def parse_args():
     parser.add_argument('--resume', '-r', action='store_true',
                         help='resume from checkpoint')
     return parser.parse_args()
-
-def load_image(filepath):
-    image = Image.open(filepath).convert('RGB')
-    return image
 
 
 if __name__ == '__main__':
@@ -38,18 +34,16 @@ if __name__ == '__main__':
     loaders = create_loaders(conf)
     is_train = args.train
     estimator = Classifier(conf)
-    print(summary(estimator.net, (1,28,28)))
+    print(summary(estimator.net, (1,32,32)))
 
     if is_train:
         estimator.fit(loaders, conf['epochs'], resume=args.resume)
         estimator.save(NET_PATH)
     else:
-        imagepath = './image/airplane4.png'
-        image = load_image(imagepath)
         estimator.load(NET_PATH)
-        #estimator.test(loaders['val'])
-        label, confidence = estimator.predict(image)
-        print(label, confidence)
+        estimator.test(loaders['val'])
+        #label, confidence = estimator.predict(image)
+        #print(label, confidence)
         '''
         data = loaders['val'].__iter__()
         (inputs, targets) = data.next()

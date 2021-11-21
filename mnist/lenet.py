@@ -9,7 +9,7 @@ class LeNet(nn.Module):
 
     def __init__(self, num_classes: int):
         super(LeNet, self).__init__()
-
+        '''
         self.features = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, stride=1),
             nn.ReLU(),
@@ -17,8 +17,8 @@ class LeNet(nn.Module):
             nn.Conv2d(16, 32, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-        )
-        '''
+        )'''
+        
         self.features = nn.Sequential(            
             nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1),
             nn.Tanh(),
@@ -28,18 +28,18 @@ class LeNet(nn.Module):
             nn.AvgPool2d(kernel_size=2),
             nn.Conv2d(in_channels=16, out_channels=120, kernel_size=5, stride=1),
             nn.Tanh()
-        )'''
+        )
         '''
-        self.classifier = nn.Sequential(
-            nn.Linear(in_features=120, out_features=84),
-            nn.Tanh(),
-            nn.Linear(in_features=84, out_features=num_classes),
-        )'''
-
         self.classifier = nn.Sequential(
             nn.Linear(32*5*5, 120),
             nn.ReLU(),
             nn.Linear(120, 10)
+        )'''
+
+        self.classifier = nn.Sequential(
+            nn.Linear(in_features=120, out_features=84),
+            nn.Tanh(),
+            nn.Linear(in_features=84, out_features=num_classes),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -8,6 +8,7 @@ def create_loaders(conf: Dict) -> Dict[str, DataLoader]:
     batch_size: int = conf['batch_size']
     print('==> loading cifar10 dataset')
     transform = transforms.Compose([
+        transforms.Resize((32, 32)),
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))
     ])
