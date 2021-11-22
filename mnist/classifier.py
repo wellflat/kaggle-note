@@ -1,5 +1,5 @@
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 import os
 import torch
 from torch import nn, optim
@@ -83,9 +83,10 @@ class Classifier:
         progress = tqdm(enumerate(loader), total=len(loader), leave=False)
         progress.set_description('Train')
         for batch_idx, (inputs, targets) in progress:
+            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
-            outputs = self.net(inputs)
+            outputs = self.net(inputs/255)
             loss = self.criterion(outputs, targets)
             loss.backward()
             self.optimizer.step()
@@ -111,9 +112,10 @@ class Classifier:
         progress = tqdm(enumerate(loader), total=len(loader), leave=False)
         progress.set_description('Val  ')
         for batch_idx, (inputs, targets) in progress:
+            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             with torch.inference_mode():
-                outputs: torch.Tensor = self.net(inputs)
+                outputs: torch.Tensor = self.net(inputs/255)
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
@@ -134,9 +136,10 @@ class Classifier:
         progress = tqdm(enumerate(loader), total=len(loader))
         progress.set_description('Test')
         for batch_idx, (inputs, targets) in progress:
+            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
             inputs, targets = inputs.to(device), targets.to(device)
             with torch.inference_mode():
-                outputs: torch.Tensor = self.net(inputs)
+                outputs: torch.Tensor = self.net(inputs/255)
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
@@ -147,15 +150,33 @@ class Classifier:
         test_accuracy = 100.*correct / len(loader.dataset)
         print(f'test accuracy: {test_accuracy}')
 
+    
+    def test_nolabel(self, loader: DataLoader) -> torch.Tensor:
+        self.net.eval()
+        device = self.device
+
+        result = []
+        progress = tqdm(enumerate(loader), total=len(loader))
+        progress.set_description('Test')
+        for batch_idx, (inputs,) in progress:
+            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            inputs = inputs.to(device)
+            with torch.inference_mode():
+                outputs: torch.Tensor = self.net(inputs/255)
+            
+            _, predicted = outputs.max(1)
+            result.append(predicted)
+        
+        return torch.cat(result)
+
 
     def predict(self, x: PILImage) -> torch.Tensor:
         #self.net.eval()
         #x.to(self.device)
         #return self.net(x)
-
         x = self.transformer(x)
         x = x.unsqueeze(0)  # type: ignore
-        with torch.no_grad():
+        with torch.inference_mode():
             outputs = self.net(x)
 
         _, preds = torch.max(outputs, 1)  # type: ignore
@@ -165,11 +186,14 @@ class Classifier:
         confidence = float('{:.3f}'.format(score))
         return (label, confidence)
 
+
     def load(self, path: str) -> None:
         self.net.load_state_dict(torch.load(path, map_location=self.device))
 
+
     def save(self, path: str) -> None:
         torch.save(self.net.state_dict(), path)
+
 
     def load_checkpoint(self) -> Tuple[int, float]:
         filepath = f'./checkpoint/{self.__class__.__name__}_model.pth'
@@ -177,10 +201,12 @@ class Classifier:
         self.net.load_state_dict(checkpoint['net'])
         return (int(checkpoint['epoch']), checkpoint['acc'])
 
+
     def save_checkpoint(self, state: Dict[str, Any]) -> None:
         os.makedirs('./checkpoint', exist_ok=True)
         filepath = f'./checkpoint/{self.__class__.__name__}_model.pth'
         torch.save(state, filepath)
+
 
     def __build_transformer(self) -> None:
         #image_size = self.config['image_size']

@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import sys
+import pandas as pd
+import torch
+from torchsummary import summary
 from loader import create_loaders
 from classifier import Classifier
-from torchsummary import summary
 
 
 def parse_args():
@@ -32,23 +35,18 @@ if __name__ == '__main__':
     print(conf)
     NET_PATH = './mnist_net.pth'
     loaders = create_loaders(conf)
+    print(len(loaders['train']), args.batch_size)
     is_train = args.train
     estimator = Classifier(conf)
-    print(summary(estimator.net, (1,32,32)))
-
+    print(summary(estimator.net, (1,28,28)))
+    #sys.exit(1)
     if is_train:
         estimator.fit(loaders, conf['epochs'], resume=args.resume)
         estimator.save(NET_PATH)
     else:
         estimator.load(NET_PATH)
-        estimator.test(loaders['val'])
-        #label, confidence = estimator.predict(image)
-        #print(label, confidence)
-        '''
-        data = loaders['val'].__iter__()
-        (inputs, targets) = data.next()
-        print(inputs.shape, targets.shape)
-        pred = estimator.predict(inputs)
-        print(pred.max(1))'''
-        
+        result = estimator.test_nolabel(loaders['test'])
+        submission = pd.read_csv('submission/sample_submission.csv')
+        submission['Label'] = result
+        submission.to_csv('submission.csv', index=False)        
         
