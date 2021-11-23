@@ -52,6 +52,7 @@ class Classifier:
             range(start_epoch, start_epoch + epochs),
             total=epochs, initial=start_epoch
         )
+        print(f'start training on {self.device.type}')
         progress.set_description('Epoch')
         for epoch in progress:
             loss = self.__train(loaders['train'])
@@ -84,9 +85,11 @@ class Classifier:
         progress.set_description('Train')
         for batch_idx, (inputs, targets) in progress:
             inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            # normalize
+            inputs = (inputs/255 - 0.5) / 0.5
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
-            outputs = self.net(inputs/255)
+            outputs = self.net(inputs)
             loss = self.criterion(outputs, targets)
             loss.backward()
             self.optimizer.step()
@@ -113,9 +116,11 @@ class Classifier:
         progress.set_description('Val  ')
         for batch_idx, (inputs, targets) in progress:
             inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            inputs = (inputs/255 - 0.5) / 0.5
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             with torch.inference_mode():
-                outputs: torch.Tensor = self.net(inputs/255)
+                outputs: torch.Tensor = self.net(inputs)
+            
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
@@ -137,9 +142,10 @@ class Classifier:
         progress.set_description('Test')
         for batch_idx, (inputs, targets) in progress:
             inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            inputs = (inputs/255 - 0.5) / 0.5
             inputs, targets = inputs.to(device), targets.to(device)
             with torch.inference_mode():
-                outputs: torch.Tensor = self.net(inputs/255)
+                outputs: torch.Tensor = self.net(inputs)
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
@@ -160,9 +166,10 @@ class Classifier:
         progress.set_description('Test')
         for batch_idx, (inputs,) in progress:
             inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            inputs = (inputs/255 - 0.5) / 0.5
             inputs = inputs.to(device)
             with torch.inference_mode():
-                outputs: torch.Tensor = self.net(inputs/255)
+                outputs: torch.Tensor = self.net(inputs)
             
             _, predicted = outputs.max(1)
             result.append(predicted)
@@ -210,9 +217,10 @@ class Classifier:
 
     def __build_transformer(self) -> None:
         #image_size = self.config['image_size']
+        image_size = 28
         self.transformer = transforms.Compose([
             #transforms.Resize((image_size, image_size)),
-            transforms.ToTensor(),
+            #transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ])
 

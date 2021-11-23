@@ -4,10 +4,10 @@
 import argparse
 import sys
 import pandas as pd
-import torch
 from torchsummary import summary
 from loader import create_loaders
 from classifier import Classifier
+import kaggle
 
 
 def parse_args():

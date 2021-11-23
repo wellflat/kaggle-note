@@ -18,11 +18,11 @@ def create_loaders(conf: Dict) -> Dict[str, DataLoader]:
     test = pd.read_csv('test.csv')
     print('train data:' + str(train.shape))
     print('test data:' + str(test.shape))
-    train_ds = train.drop('label', axis=1).values
-    test_ds = test.values
+    train_arr = train.drop('label', axis=1).values
+    test_arr = test.values
     labels = train.label.to_numpy()
-    train_tensor = torch.tensor(train_ds)
-    test_tensor = torch.tensor(test_ds)
+    train_tensor = torch.tensor(train_arr, dtype=torch.float32)
+    test_tensor = torch.tensor(test_arr, dtype=torch.float32)
     labels_tensor = torch.tensor(labels, dtype=torch.long)
     train_dataset = TensorDataset(train_tensor, labels_tensor)
     split = (40000, 2000) # (32000, 10000)
