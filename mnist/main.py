@@ -6,7 +6,7 @@ import sys
 import pandas as pd
 from torchsummary import summary
 from loader import create_loaders
-from classifier import Classifier
+from resnet_classifier import Classifier
 import kaggle
 
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print(len(loaders['train']), args.batch_size)
     is_train = args.train
     estimator = Classifier(conf)
-    print(summary(estimator.net, (1,28,28)))
+    #print(summary(estimator.net, (1,28,28)))
     #sys.exit(1)
     if is_train:
         estimator.fit(loaders, conf['epochs'], resume=args.resume)

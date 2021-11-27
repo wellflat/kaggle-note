@@ -4,30 +4,21 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset, random_split
 import torchvision
 from torchvision import transforms
+from dataset import MNISTDataset
 
 
 def create_loaders(conf: Dict) -> Dict[str, DataLoader]:
     batch_size: int = conf['batch_size']
     print('==> loading mnist dataset')
-    transform = transforms.Compose([
-        #transforms.Resize((32, 32)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
     train = pd.read_csv('train.csv') 
     test = pd.read_csv('test.csv')
     print('train data:' + str(train.shape))
     print('test data:' + str(test.shape))
-    train_arr = train.drop('label', axis=1).values
-    test_arr = test.values
-    labels = train.label.to_numpy()
-    train_tensor = torch.tensor(train_arr, dtype=torch.float32)
-    test_tensor = torch.tensor(test_arr, dtype=torch.float32)
-    labels_tensor = torch.tensor(labels, dtype=torch.long)
-    train_dataset = TensorDataset(train_tensor, labels_tensor)
+    dataset = MNISTDataset(train)
+    test_set = MNISTDataset(test)
     split = (40000, 2000) # (32000, 10000)
-    train_set , val_set = random_split(train_dataset, split)
-    test_set = TensorDataset(test_tensor)
+    torch.manual_seed(784)
+    train_set, val_set = random_split(dataset, split)
     train_loader = DataLoader(
         train_set,
         batch_size=batch_size,
