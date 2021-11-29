@@ -18,7 +18,7 @@ from resnet import MNISTResNet
 class Classifier:
     net: MNISTResNet
     criterion: nn.CrossEntropyLoss
-    optimizer: optim.SGD
+    optimizer: optim.Adam
     scheduler: optim.lr_scheduler.StepLR
     transformer: Compose
     logger: SummaryWriter
@@ -29,13 +29,19 @@ class Classifier:
         self.net = MNISTResNet()
         self.criterion = nn.CrossEntropyLoss()
         self.__build_transformer()
+        '''
         self.optimizer = optim.SGD(
             self.net.parameters(),
             lr=conf.get('base_lr', 0.01),
             momentum=conf.get('momentum', 0.9),
             weight_decay=5e-4
+        )'''
+        self.optimizer = optim.Adam(
+            self.net.parameters(),
+            lr=conf.get('base_lr', 0.01)
+            
         )
-        self.schedular = StepLR(self.optimizer, step_size=30, gamma=0.1)
+        self.schedular = StepLR(self.optimizer, step_size=10, gamma=0.1)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         torch.backends.cudnn.benchmark = True if torch.cuda.is_available() else False
         self.net.to(self.device)
@@ -143,8 +149,8 @@ class Classifier:
         progress = tqdm(enumerate(loader), total=len(loader))
         progress.set_description('Test')
         for batch_idx, (inputs, targets) in progress:
-            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
-            inputs = (inputs/255 - 0.5) / 0.5
+            #inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            #inputs = (inputs/255 - 0.5) / 0.5
             inputs, targets = inputs.to(device), targets.to(device)
             with torch.inference_mode():
                 outputs: torch.Tensor = self.net(inputs)
@@ -166,9 +172,9 @@ class Classifier:
         result = []
         progress = tqdm(enumerate(loader), total=len(loader))
         progress.set_description('Test')
-        for batch_idx, (inputs,) in progress:
-            inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
-            inputs = (inputs/255 - 0.5) / 0.5
+        for batch_idx, inputs in progress:
+            #inputs = inputs.reshape(inputs.shape[0], 1, 28, 28)
+            #inputs = (inputs/255 - 0.5) / 0.5
             inputs = inputs.to(device)
             with torch.inference_mode():
                 outputs: torch.Tensor = self.net(inputs)

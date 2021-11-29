@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader, TensorDataset, random_split
@@ -7,6 +7,11 @@ from torchvision import transforms
 from dataset import MNISTDataset
 
 
+def split_dataframe(df:pd.DataFrame, fraction=0.95, state=1) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    df1 = df.sample(frac=fraction, random_state=state)
+    df2 = df.drop(df1.index)
+    return (df1, df2)
+
 def create_loaders(conf: Dict) -> Dict[str, DataLoader]:
     batch_size: int = conf['batch_size']
     print('==> loading mnist dataset')
@@ -14,11 +19,28 @@ def create_loaders(conf: Dict) -> Dict[str, DataLoader]:
     test = pd.read_csv('test.csv')
     print('train data:' + str(train.shape))
     print('test data:' + str(test.shape))
-    dataset = MNISTDataset(train)
-    test_set = MNISTDataset(test)
-    split = (40000, 2000) # (32000, 10000)
-    torch.manual_seed(784)
-    train_set, val_set = random_split(dataset, split)
+    train, val = split_dataframe(train)
+    transform = {
+        'train': transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.RandomAffine(degrees=45, translate=(0.1, 0.1), scale=(0.8, 1.2)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ]),
+        'val': transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+    }
+    train_set = MNISTDataset(train, transform['train'])
+    val_set = MNISTDataset(val, transform['val'])
+    test_set = MNISTDataset(test, transform['val'])
+    print(len(train_set),len(val_set),len(test_set))
+    #split = (40000, 2000) # (32000, 10000)
+    #gen = torch.Generator().manual_seed(784)
+    #train_set, val_set = random_split(dataset, split, generator=gen)
+    
     train_loader = DataLoader(
         train_set,
         batch_size=batch_size,

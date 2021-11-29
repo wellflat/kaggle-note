@@ -12,14 +12,10 @@ class MNISTDataset(Dataset):
     y: torch.Tensor
     transforms: transforms.Compose
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, transform: transforms.Compose):
         super().__init__()
         self.n_pixels = 784
-        self.transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
-        ])
+        self.transforms = transform
         
         if len(df.columns) == self.n_pixels:
             # test data
