@@ -17,9 +17,9 @@ from resnet import MNISTResNet
 
 class Classifier:
     net: MNISTResNet
-    criterion: nn.CrossEntropyLoss
+    criterion: CrossEntropyLoss
     optimizer: optim.Adam
-    scheduler: optim.lr_scheduler.StepLR
+    scheduler: StepLR
     transformer: Compose
     logger: SummaryWriter
 
@@ -98,7 +98,7 @@ class Classifier:
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             outputs = self.net(inputs)
-            loss: CrossEntropyLoss = self.criterion(outputs, targets)
+            loss: torch.Tensor = self.criterion(outputs, targets)
             loss.backward()
             self.optimizer.step()
             running_loss += loss.item()

@@ -17,6 +17,7 @@ torchvision = {file = "https://download.pytorch.org/whl/cpu/torchvision-0.11.1%2
 tensorboard = "*"
 torchsummary = "*"
 jupyter = "*"
+pytorch-lightning = "*"
 
 [dev-packages]
 ipykernel = "*"
