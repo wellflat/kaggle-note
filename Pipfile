@@ -21,6 +21,7 @@ pytorch-lightning = "*"
 
 [dev-packages]
 ipykernel = "*"
+torch-tb-profiler = "*"
 
 [requires]
 python_version = "3.8"

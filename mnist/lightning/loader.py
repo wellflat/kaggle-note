@@ -11,66 +11,44 @@ Phase = Literal['train', 'val', 'test']
 
 class MNISTDataModule(pl.LightningDataModule):
     config: DataConfig
-    transform: transforms.Compose
-    
+    dataset: Dict[Phase, DataLoader]
+
     def setup(self, stage: Optional[str] = None) -> None:
         self.config = DataConfig()
-        self.transform = transforms.Compose([
+        train = pd.read_csv(self.config.train_filepath) 
+        test = pd.read_csv(self.config.test_filepath)
+        train, val = self.__split_dataframe(train)
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize((32, 32)),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ])
-        self.dataset = self.__prepare_data()
+        self.dataset = {
+            'train': MNISTDataset(train, transform),
+            'val': MNISTDataset(val, transform),
+            'test': MNISTDataset(test, transform) 
+        }
     
     def train_dataloader(self) -> DataLoader:
-        loader = DataLoader(
-            self.dataset['train'],
-            batch_size=self.config.batch_size,
-            shuffle=True,
-            num_workers=self.config.num_workers,
-            pin_memory=True
-        )
-        return loader
+        return self.__get_loader('train')
 
     def val_dataloader(self) -> DataLoader:
-        loader = DataLoader(
-            self.dataset['val'],
-            batch_size=self.config.batch_size,
-            shuffle=False,
-            num_workers=self.config.num_workers,
-            pin_memory=True
-        )
-        return loader
+        return self.__get_loader('val')
 
     def test_dataloader(self) -> DataLoader:
-        loader = DataLoader(
-            self.dataset['test'],
-            batch_size=self.config.batch_size,
-            shuffle=False,
-            num_workers=self.config.num_workers,
-            pin_memory=True
-        )
-        return loader
+        return self.__get_loader('test')
 
-    def __get_loader(self, phase: str) -> DataLoader:
+    def __get_loader(self, phase: Phase) -> DataLoader:
         loader = DataLoader(
             self.dataset[phase],
             batch_size=self.config.batch_size,
-            shuffle=False,
+            shuffle=True if phase == 'train' else False,
             num_workers=self.config.num_workers,
-            pin_memory=True
+            pin_memory=True,
+            drop_last=True if phase == "train" else False
         )
-        return loader
-    
-    def __prepare_data(self) -> Dict[str, DataFrame]:
-        train = pd.read_csv(self.config.train_filepath) 
-        test = pd.read_csv(self.config.test_filepath)
-        train, val = self.__split_dataframe(train)
-        return {
-            'train': train,
-            'val': val,
-            'test': test
-        }
+        return loader        
 
     def __split_dataframe(self, df:DataFrame, fraction=0.9, state=1) -> Tuple[DataFrame, DataFrame]:
         df1 = df.sample(frac=fraction, random_state=state)
