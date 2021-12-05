@@ -4,6 +4,7 @@
 import argparse
 import sys
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 from loader import MNISTDataModule
 from classifier import Classifier
@@ -24,15 +25,27 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     print(args)
+    pl.seed_everything(36, workers=True)
     config = TrainingConfig(args.lr)
     model = Classifier(config)
     data_module = MNISTDataModule()
     logger = TensorBoardLogger('tb_logs', name='MNIST - LeNet')
-    root_dir = './checkpoints'
+    trainer_callbacks = [
+        ModelCheckpoint(
+            dirpath='./checkpoints',
+            filename='mnist-lenet:{epoch:02d}-{val_acc:.3f}',
+            monitor='val_acc',
+            mode='max',
+            save_top_k=1
+        ),
+        LearningRateMonitor('epoch')
+    ]
     trainer = pl.Trainer(
-        default_root_dir=root_dir,
         max_epochs=args.epochs,
+        callbacks=trainer_callbacks,
         logger=logger
     )
     trainer.fit(model, data_module)
-    #trainer.validate(model, data_module)
+    print(f'best model: {trainer_callbacks[0].best_model_path}')
+    trainer.save_checkpoint('mnist-lenet.ckpt')
+    trainer.validate(model, data_module)

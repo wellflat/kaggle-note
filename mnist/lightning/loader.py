@@ -29,6 +29,7 @@ class MNISTDataModule(pl.LightningDataModule):
             'val': MNISTDataset(val, transform),
             'test': MNISTDataset(test, transform) 
         }
+        print(f"train: {len(self.dataset['train'])}, val: {len(self.dataset['val'])}")
     
     def train_dataloader(self) -> DataLoader:
         return self.__get_loader('train')

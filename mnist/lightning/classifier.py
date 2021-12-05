@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 import torch
 from torch import nn, optim, Tensor
 from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
 from lenet import LeNet
 from config import TrainingConfig
+
 
 class Classifier(pl.LightningModule):
     net: nn.Module
@@ -16,6 +17,7 @@ class Classifier(pl.LightningModule):
         self.config = config
         self.net = LeNet(num_classes=10)
         self.criterion = nn.CrossEntropyLoss()
+        self.save_hyperparameters()
 
     def forward(self, x:Tensor) -> Tensor:
         return self.net.forward(x)
@@ -25,7 +27,7 @@ class Classifier(pl.LightningModule):
         scheduler = StepLR(optimizer, step_size=self.config.step_size, gamma=self.config.gamma)
         return [optimizer], [scheduler]
     
-    def training_step(self, batch:Tuple[Tensor, Tensor], batch_idx:int) -> Tensor:
+    def training_step(self, batch:Tuple[Tensor, Tensor], batch_idx:int) -> Dict[str, Tensor]:
         inputs, targets = batch
         logits: Tensor = self.net(inputs)
         loss: Tensor = self.criterion(logits, targets)
@@ -33,9 +35,9 @@ class Classifier(pl.LightningModule):
     
     def training_epoch_end(self, outputs: Tensor) -> None:
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        self.log('loss', avg_loss, prog_bar=True)
+        self.log('train_loss', avg_loss, prog_bar=True)
     
-    def validation_step(self, batch:Tuple[Tensor, Tensor] , batch_idx:int) -> Dict[str, Any]:
+    def validation_step(self, batch:Tuple[Tensor, Tensor] , batch_idx:int) -> Dict[str, float]:
         inputs, targets = batch
         logits: Tensor = self.net(inputs)
         preds = logits.argmax(1)
