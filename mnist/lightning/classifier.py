@@ -4,6 +4,7 @@ from torch import nn, optim, Tensor
 from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
 from lenet import LeNet
+from resnet import MNISTResNet
 from config import TrainingConfig
 
 
@@ -15,7 +16,7 @@ class Classifier(pl.LightningModule):
     def __init__(self, config:TrainingConfig):
         super().__init__()
         self.config = config
-        self.net = LeNet(num_classes=10)
+        self.net = MNISTResNet()
         self.criterion = nn.CrossEntropyLoss()
         self.save_hyperparameters()
 

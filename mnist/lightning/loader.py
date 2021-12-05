@@ -18,16 +18,23 @@ class MNISTDataModule(pl.LightningDataModule):
         train = pd.read_csv(self.config.train_filepath) 
         test = pd.read_csv(self.config.test_filepath)
         train, val = self.__split_dataframe(train)
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize((32, 32)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
-        ])
+        transform = {
+            'train': transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.RandomAffine(degrees=45, translate=(0.1, 0.1), scale=(0.8, 1.2)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ]),
+            'val': transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
+        }
         self.dataset = {
-            'train': MNISTDataset(train, transform),
-            'val': MNISTDataset(val, transform),
-            'test': MNISTDataset(test, transform) 
+            'train': MNISTDataset(train, transform['train']),
+            'val': MNISTDataset(val, transform['val']),
+            'test': MNISTDataset(test, transform['val']) 
         }
         print(f"train: {len(self.dataset['train'])}, val: {len(self.dataset['val'])}")
     
