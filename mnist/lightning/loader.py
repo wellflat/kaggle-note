@@ -13,8 +13,11 @@ class MNISTDataModule(pl.LightningDataModule):
     config: DataConfig
     dataset: Dict[Phase, DataLoader]
 
+    def __init__(self, config:DataConfig):
+        super().__init__()
+        self.config = config
+    
     def setup(self, stage: Optional[str] = None) -> None:
-        self.config = DataConfig()
         train = pd.read_csv(self.config.train_filepath) 
         test = pd.read_csv(self.config.test_filepath)
         train, val = self.__split_dataframe(train)

@@ -3,7 +3,6 @@ import torch
 from torch import nn, optim, Tensor
 from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
-from lenet import LeNet
 from resnet import MNISTResNet
 from config import TrainingConfig
 
