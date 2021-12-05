@@ -39,6 +39,9 @@ class MNISTDataModule(pl.LightningDataModule):
 
     def test_dataloader(self) -> DataLoader:
         return self.__get_loader('test')
+    
+    def predict_dataloader(self) -> DataLoader:
+        return self.__get_loader('test')
 
     def __get_loader(self, phase: Phase) -> DataLoader:
         loader = DataLoader(

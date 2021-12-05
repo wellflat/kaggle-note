@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 import torch
 from torch import nn, optim, Tensor
 from torch.optim.lr_scheduler import StepLR
@@ -27,13 +27,13 @@ class Classifier(pl.LightningModule):
         scheduler = StepLR(optimizer, step_size=self.config.step_size, gamma=self.config.gamma)
         return [optimizer], [scheduler]
     
-    def training_step(self, batch:Tuple[Tensor, Tensor], batch_idx:int) -> Dict[str, Tensor]:
+    def training_step(self, batch:Tuple[Tensor, Tensor], batch_idx:Optional[int]) -> Dict[str, Tensor]:
         inputs, targets = batch
         logits: Tensor = self.net(inputs)
         loss: Tensor = self.criterion(logits, targets)
         return {'loss': loss}
     
-    def training_epoch_end(self, outputs: Tensor) -> None:
+    def training_epoch_end(self, outputs:Dict[str, Tensor]) -> None:
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         self.log('train_loss', avg_loss, prog_bar=True)
     
@@ -44,15 +44,20 @@ class Classifier(pl.LightningModule):
         accuracy = sum(preds == targets) / len(targets)
         return {'val_acc': accuracy}
     
-    def validation_epoch_end(self, outputs: Tensor) -> None:
+    def validation_epoch_end(self, outputs:Dict[str, Tensor]) -> None:
         avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         self.log('val_acc', avg_acc, prog_bar=True)
 
-    def test_step(self, *args, **kwargs):
-        pass
+    def test_step(self, batch:Tensor, batch_idx:int) -> Tensor:
+        logits: torch.Tensor = self.net(batch)
+        preds = logits.argmax(1)
+        return preds
 
-    def test_epoch_end(self, outputs) -> None:
-        pass
-
-
+    def test_epoch_end(self, outputs:Tensor) -> Tensor:
+        preds = torch.cat(outputs)
+        return preds
     
+    def predict_step(self, batch, batch_idx:int) -> Tensor:
+        logits: Tensor = self.net(batch)
+        preds = logits.argmax(1)
+        return preds

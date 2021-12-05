@@ -3,6 +3,8 @@
 
 import argparse
 import sys
+import pandas as pd
+import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -43,9 +45,20 @@ if __name__ == '__main__':
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         callbacks=trainer_callbacks,
-        logger=logger
+        logger=logger,
     )
-    trainer.fit(model, data_module)
-    print(f'best model: {trainer_callbacks[0].best_model_path}')
-    trainer.save_checkpoint('mnist-lenet.ckpt')
-    trainer.validate(model, data_module)
+    model_path = 'mnist-lenet.ckpt'
+    if args.train:
+        trainer.fit(model, data_module)
+        print(f'best model: {trainer_callbacks[0].best_model_path}')
+        trainer.save_checkpoint(model_path)
+    else:
+        print(f'load from {model_path}')
+        model = model.load_from_checkpoint(model_path, config=config)
+        #trainer.validate(model, data_module)
+        #trainer.test(model, data_module)
+        preds = trainer.predict(model, data_module)
+        result = torch.cat(preds)
+        submission = pd.read_csv('../submission/sample_submission.csv')
+        submission['Label'] = result
+        submission.to_csv('submission.csv', index=False)   
