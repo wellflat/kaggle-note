@@ -7,4 +7,6 @@ tb_logs/
 *.pth
 *.ckpt
 kaggle.json
+kaggle.db
 Pipfile.lock
+poetry.lock
