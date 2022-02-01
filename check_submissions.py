@@ -44,9 +44,28 @@ def regist_submission(con: sqlite3.Connection, sub: Dict[str, Any]) -> None:
             running_time
         ))
         con.commit()
+    elif sub['status'] == 'complete': ## check id
+        sql = (
+            'UPDATE `submissions`'
+            'SET status = "complete", score = ?'
+            'WHERE id = ?'
+        )
+        cur.execute(sql, (sub['publicScore'], int(sub['ref'])))
+        con.commit()
+    else:
+        pass
     
     return    
 
+
+def check_pending(con: sqlite3.Connection):
+    cur = con.cursor()
+    sql = 'SELECT description, running_time FROM submissions WHERE status="pending"'
+    cur.execute(sql)
+    rows = cur.fetchall()
+    print(f'check {len(rows)} pending submissions')
+    for row in rows:
+        print(f'{row["description"]}, {row["running_time"]} hours')
 
 
 if __name__ == '__main__':
@@ -54,8 +73,11 @@ if __name__ == '__main__':
     con = get_db('kaggle.db')
     comp_name = 'tensorflow-great-barrier-reef'
     subs = kaggle_api.competitions_submissions_list(comp_name, page=1)
+    #pprint(subs)
     for sub in subs:
         regist_submission(con, sub)
     
-    print(f'check {len(subs)} submissions')
+    check_pending(con)
+
+    con.close()
 
