@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from kaggle.api.kaggle_api_extended import KaggleApi
 from datetime import datetime
 from pprint import pprint
+import time
 import sqlite3
 
 
@@ -44,7 +45,7 @@ def regist_submission(con: sqlite3.Connection, sub: Dict[str, Any]) -> None:
             running_time
         ))
         con.commit()
-    elif sub['status'] == 'complete': ## check id
+    elif sub['status'] == 'complete':
         sql = (
             'UPDATE `submissions`'
             'SET status = "complete", score = ?'
@@ -72,12 +73,16 @@ if __name__ == '__main__':
     kaggle_api = get_kaggle_api()
     con = get_db('kaggle.db')
     comp_name = 'tensorflow-great-barrier-reef'
-    subs = kaggle_api.competitions_submissions_list(comp_name, page=1)
-    #pprint(subs)
-    for sub in subs:
-        regist_submission(con, sub)
+    daemon = True
+    if daemon:
+        while True:
+            subs = kaggle_api.competitions_submissions_list(comp_name, page=1)
     
-    check_pending(con)
-
+            for sub in subs:
+                regist_submission(con, sub)
+    
+            check_pending(con)
+            print('----------')
+            time.sleep(60*10)  # 10min
     con.close()
 
