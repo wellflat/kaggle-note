@@ -10,3 +10,4 @@ kaggle.json
 kaggle.db
 Pipfile.lock
 poetry.lock
+*.zip
