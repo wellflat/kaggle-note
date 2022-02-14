@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 
-from typing import Any, Dict, List
-from kaggle.api.kaggle_api_extended import KaggleApi
+
+import argparse
+from typing import Any, Dict
 from datetime import datetime
 from pprint import pprint
-import time
 import sqlite3
+import time
+from kaggle.api.kaggle_api_extended import KaggleApi
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Kaggle submissions viewer')
+    parser.add_argument('--name', '-n', required=True, type=str, help='competition name')
+    parser.add_argument('--interval', '-i', type=int, default=10, help='fetch interval (sec)')
+    return parser.parse_args()
 
 
 def get_db(dbname: str) -> sqlite3.Connection:
@@ -59,7 +68,7 @@ def regist_submission(con: sqlite3.Connection, sub: Dict[str, Any]) -> None:
     return    
 
 
-def check_pending(con: sqlite3.Connection):
+def check_pending(con: sqlite3.Connection) -> None:
     cur = con.cursor()
     sql = 'SELECT description, running_time FROM submissions WHERE status="pending"'
     cur.execute(sql)
@@ -70,19 +79,21 @@ def check_pending(con: sqlite3.Connection):
 
 
 if __name__ == '__main__':
+    args = parse_arguments()
+    print(args)
     kaggle_api = get_kaggle_api()
     con = get_db('kaggle.db')
-    comp_name = 'tensorflow-great-barrier-reef'
     daemon = True
     if daemon:
         while True:
-            subs = kaggle_api.competitions_submissions_list(comp_name, page=1)
+            subs = kaggle_api.competitions_submissions_list(args.name, page=1)
     
             for sub in subs:
                 regist_submission(con, sub)
     
             check_pending(con)
-            print('----------')
-            time.sleep(60*10)  # 10min
+            print('-------------')
+            time.sleep(60*args.interval)
+    
     con.close()
 
