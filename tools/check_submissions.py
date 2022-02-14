@@ -4,7 +4,6 @@
 import argparse
 from typing import Any, Dict
 from datetime import datetime
-from pprint import pprint
 import sqlite3
 import time
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -13,7 +12,7 @@ from kaggle.api.kaggle_api_extended import KaggleApi
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Kaggle submissions viewer')
     parser.add_argument('--name', '-n', required=True, type=str, help='competition name')
-    parser.add_argument('--interval', '-i', type=int, default=10, help='fetch interval (sec)')
+    parser.add_argument('--interval', '-i', type=int, default=10, help='fetch interval (minute)')
     return parser.parse_args()
 
 
@@ -54,7 +53,7 @@ def regist_submission(con: sqlite3.Connection, sub: Dict[str, Any]) -> None:
             running_time
         ))
         con.commit()
-    elif sub['status'] == 'complete':
+    elif sub['status'] == 'complete':  ## TODO: filter no score sub
         sql = (
             'UPDATE `submissions`'
             'SET status = "complete", score = ?'
