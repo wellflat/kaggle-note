@@ -11,3 +11,5 @@ kaggle.db
 Pipfile.lock
 poetry.lock
 *.zip
+*.jpg
+*.png
