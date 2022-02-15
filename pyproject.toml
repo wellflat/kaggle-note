@@ -5,7 +5,7 @@ description = ""
 authors = ["wellflat <wellflat@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9.0"
 kaggle = "^1.5.12"
 numpy = "^1.22.1"
 pandas = "^1.4.0"
